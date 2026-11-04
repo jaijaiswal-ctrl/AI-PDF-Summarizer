@@ -3,75 +3,71 @@ import PyPDF2
 from groq import Groq
 from dotenv import load_dotenv
 
-# 1. Load API key from .env file
+# Load env vars
 load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 
 if not api_key:
-    print("❌ Error: GROQ_API_KEY not found in .env file. Please add it!")
+    print("Error: GROQ_API_KEY is missing from the .env file")
     exit()
 
-# Initialize Groq Client
 client = Groq(api_key=api_key)
 
-def extract_text_from_pdf(pdf_path):
-    """Extracts all text from a given PDF file."""
-    text = ""
+def get_pdf_text(path):
+    # Extract text from each page of the pdf
+    pages_text = []
     try:
-        with open(pdf_path, "rb") as file:
-            reader = PyPDF2.PdfReader(file)
-            print(f"📄 PDF contains {len(reader.pages)} pages.")
-            for page in reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
-        print(f"✅ Successfully extracted {len(text)} characters.")
+        with open(path, "rb") as f:
+            pdf = PyPDF2.PdfReader(f)
+            for page in pdf.pages:
+                txt = page.extract_text()
+                if txt:
+                    pages_text.append(txt)
+        
+        full_text = "\n".join(pages_text)
+        print(f"Done. Extracted {len(full_text)} chars from {len(pdf.pages)} pages.")
+        return full_text
     except Exception as e:
-        print(f"❌ Error reading PDF: {e}")
-    return text
+        print(f"Couldn't read PDF: {e}")
+        return None
 
 def summarize_text(text):
-    """Sends the extracted text to Groq AI for summarization."""
-    # Professional prompt to ensure the AI reads the whole document
-    prompt = (
-        "You are a professional research assistant. I will provide you with text extracted from a PDF. "
-        "Please analyze the ENTIRE text from start to finish. "
-        "Ensure that you include key insights from the beginning, middle, and end of the document. "
-        "Provide a comprehensive summary in 5-7 detailed bullet points. "
-        f"\n\nTEXT TO SUMMARIZE:\n{text}"
-    )
+    # Simple prompt for the AI
+    prompt = f"""Summarize the following text from a PDF. 
+    Focus on the key insights, main arguments, and conclusions. 
+    Use 5-7 detailed bullet points.
+
+    Text:
+    {text}"""
 
     try:
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
-            model="qwen/qwen3.8-27b", # Using the model confirmed by your check_groq.py
+        res = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="qwen/qwen3.8-27b",
         )
-        return chat_completion.choices[0].message.content
+        return res.choices[0].message.content
     except Exception as e:
-        return f"❌ AI Error: {e}"
+        return f"AI Error: {e}"
+
+def main():
+    path = input("Enter PDF path: ").strip()
+    
+    if not os.path.exists(path):
+        print("File not found. Please check the path.")
+        return
+
+    print("Reading file...")
+    content = get_pdf_text(path)
+    
+    if not content or len(content) < 50:
+        print("Not enough text found. Is it a scanned image/OCR PDF?")
+        return
+    
+    print("Summarizing...")
+    summary = summarize_text(content)
+    
+    print("\n--- Summary ---\n")
+    print(summary)
 
 if __name__ == "__main__":
-    print("--- Welcome to AI PDF Summarizer (Powered by Groq) ---")
-    pdf_file = input("Enter the path to your PDF file (e.g., test.pdf): ")
-    
-    try:
-        print("\n--- Step 1: Extracting Text ---")
-        extracted_text = extract_text_from_pdf(pdf_file)
-        
-        if len(extracted_text) < 50:
-            print("⚠️ Warning: Very little text was found. The PDF might be a scanned image.")
-        
-        print("\n--- Step 2: Generating AI Summary (Groq is super fast!) ---")
-        summary = summarize_text(extracted_text)
-        
-        print("\n--- 🚀 FINAL SUMMARY ---\n")
-        print(summary)
-        print("\n-----------------------")
-        
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+    main()

@@ -1,20 +1,20 @@
-# 📄 AI PDF Summarizer (Powered by Groq)
+# AI PDF Summarizer (Powered by Groq)
 
 An ultra-fast AI-powered tool that extracts text from multi-page PDF documents and generates high-quality, comprehensive summaries using the Groq LPU inference engine and the Qwen model.
 
-## 🌟 Features
+##  Features
 - **Full-Document Analysis:** Unlike basic summarizers, this tool analyzes the entire PDF from start to finish.
 - **Blazing Fast:** Uses Groq's LPU technology for near-instant AI responses.
 - **High-Quality Output:** Employs professional prompt engineering to ensure the summary captures the beginning, middle, and end of the text.
 - **Secure:** Uses environment variables to manage API permissions.
 
-## 🛠 Tech Stack
+##  Tech Stack
 - **Language:** Python 3.9+
 - **AI Model:** Qwen (via Groq Cloud API)
 - **PDF Parsing:** PyPDF2
 - **Environment Management:** python-dotenv
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 ### 1. Clone the Project
 ```bash
